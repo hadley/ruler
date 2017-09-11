@@ -6,20 +6,24 @@ output: github_document
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "README-"
+  fig.path = "README-",
+  error = TRUE
 )
+library(ruler)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 ```
 
 # ruler: Rule Your Data
 
 [![Travis-CI Build Status](https://travis-ci.org/echasnovski/ruler.svg?branch=master)](https://travis-ci.org/echasnovski/ruler)
-[![Coverage Status](https://img.shields.io/codecov/c/github/echasnovski/ruler/master.svg)](https://codecov.io/github/echasnovski/ruler?branch=master)
-[![packageversion](https://img.shields.io/badge/Package%20version-0.0.0.9000-green.svg?style=flat-square)](commits/master)
+[![Coverage Status](https://codecov.io/gh/echasnovski/ruler/graph/badge.svg)](https://codecov.io/github/echasnovski/ruler?branch=master)
 
 `ruler` offers a set of tools for creating tidy data validation reports using 
 [dplyr](http://dplyr.tidyverse.org) grammar of data manipulation. It is designed
 to be flexible and extendable in terms of creating rules and using their output.
+
+It is recommended to have the solid knowledge of `dplyr` to fully use this
+package.
 
 ## Installation
 
@@ -30,17 +34,209 @@ You can install `ruler` from github with:
 devtools::install_github("echasnovski/ruler")
 ```
 
+## Overview
+
+__Rule__ is a function which converts data unit of interest (data, group,
+column, row, cell) to logical value indicating whether this object satisfies
+certain condition.
+
+__Rule pack__ is a function which combines several rules into one functional
+block. The recommended way of creating rules is by creating packs right away with the use of `dplyr` and [magrittr](http://magrittr.tidyverse.org/)'s
+pipe operator.
+
+__Exposing__ data to rules means applying rules to data, collecting results in common format and attaching it to the data as an `exposure` attribute. In this way actual exposure can be done in multiple steps and also be a part of a general data preparation pipeline.
+
+__Exposure__ is a format designed to contain uniform information about validation of different data units. It also saves information about packs application for reproducibilty. Basically exposure is a list with two elements:
+
+1. __Packs info__: a [tibble](http://tibble.tidyverse.org/) with the following structure:
+    - _name_ \<chr\> : Name of the pack. If not given it will be imputed during exposure.
+    - _type_ \<chr\> : Name of pack type. Indicates which data unit pack checks.
+    - _fun_ \<list\> : List (preferably unnamed) of rule pack functions.
+    - _remove_obeyers_ \<lgl\> : Whether rows about obeyers (data units that obey certain rule) were removed from report after applying pack.
+2. __Tidy data validation report__: a `tibble` with the following structure:
+    - _pack_ \<chr\> : Name of rule pack from column 'name' in packs info.
+    - _rule_ \<chr\> : Name of the rule defined in rule pack.
+    - _var_ \<chr\> : Name of the variable which validation result is reported. Value '.all' is reserved and interpreted as 'all columns as a whole'. __Note__ that _var_ doesn't always represent the actual column in data frame: for group packs it represent the created group name.
+    - _id_ \<int\> : Index of the row in tested data frame which validation result is reported. Value 0 is reserved and interpreted as 'all rows as a whole'.
+    - _value_ \<lgl\> : Whether the described data unit obeys the rule.
+    
+There are four basic combinations of `var` and `id` values which define five basic data units:
+
+- `var == '.all'` and `id == 0`: Data as a whole.
+- `var != '.all'` and `id == 0`: Group (`var` shouldn't be an actual column name) or column (`var` should be an actual column name) as a whole.
+- `var == '.all'` and `id != 0`: Row as a whole.
+- `var != '.all'` and `id != 0`: Described cell.
+
+With exposure attached to data one can perform different kinds of actions: exploration, assertion, imputation and so on.
+
 ## Usage
 
-### Check data properties
+### Creating packs
 
-To check whether dimensions of `mtcars` obey some rules one can write the next
-dplyr pipeline:
+#### Data packs
 
-```{r Data dimensions of mtcars}
-mtcars %>% summarise(
-  nrow_low = nrow(.) > 10, nrow_high = nrow(.) < 30,
-  ncol = ncol(.) == 12
+```{r Data pack}
+# List of two rule packs for checking data properties
+my_data_packs <- data_packs(
+  # data_dims is a pack name
+  # Data should have 12 columns and 32 rows
+  data_dims = . %>% summarise(
+    # ncol and nrow are rule names
+    ncol = ncol(.) == 12,
+    nrow = nrow(.) == 32
+  ),
+  
+  # Data after subsetting should have number of rows in between 10 and 30
+  # Rules are applied separately
+  vs_1 = . %>% filter(vs == 1) %>%
+    summarise(
+      nrow_low = nrow(.) > 10,
+      nrow_high = nrow(.) < 30
+    )
 )
+```
+
+#### Group packs
+
+```{r Group pack}
+# List of one nameless rule pack for checking group property
+my_group_packs <- group_packs(
+  # Name will be imputed during exposure
+  . %>% group_by(vs, am) %>%
+    # Group should have at least one row with 'cyl' == 6
+    summarise(any_cyl_6 = any(cyl == 6)),
+  
+  # One should supply grouping variables
+  .group_vars = c("vs", "am")
+)
+```
+
+#### Column packs
+
+```{r Column pack}
+# List of one rule pack for checking certain columns' property
+my_col_packs <- col_packs(
+  sum_bounds = . %>% summarise_at(
+    # Check only columns with names starting with 'c'
+    vars(starts_with("c")),
+    # rules() is a dplyr::funs() with necessary name imputations
+    # In column packs it should always be used instead of dplyr::funs()
+    # Columns should have sum in between 300 and 400
+    rules(sum_low = sum(.) > 300, sum_high = sum(.) < 400)
+  )
+)
+```
+
+#### Row packs
+
+```{r Row packs}
+# List of one rule pack checking certain rows' property
+z_score <- function(x) {(x - mean(x)) / sd(x)}
+
+my_row_packs <- row_packs(
+  row_mean = . %>% mutate(rowMean = rowMeans(.)) %>%
+    # Row's mean should deviate from mean of row means by not more than 1 sd
+    transmute(is_common_row_mean = abs(z_score(rowMean)) < 1) %>%
+    # Check only rows 10-15
+    # Values in 'id' column of report will be based on input data (i.e. 10-15)
+    # and not on output data (1-6)
+    slice(10:15)
+)
+```
+
+#### Cell packs
+
+```{r Cell packs}
+# List of one cell pack checking certain cells property
+is_integerish <- function(x) {all(x == as.integer(x))}
+
+my_cell_packs <- cell_packs(
+  my_cell_pack_1 = . %>% transmute_if(
+    # Check only integer-like columns
+    is_integerish,
+    # Value should deviate from its column mean by not more than 1 sd
+    rules(is_common = abs(z_score(.)) < 1)
+  ) %>%
+    # Check only rows 20-30
+    slice(20:30)
+)
+```
+
+### Exposing
+
+By default exposing removes obeyers.
+
+```{r Expose removes obeyers by default}
+mtcars %>%
+  expose(my_data_packs, my_group_packs) %>%
+  get_exposure()
+```
+
+One can leave obeyers by setting `.remove_obeyers` to `FALSE`.
+
+```{r Expose can not remove obeyers}
+mtcars %>%
+  expose(my_data_packs, my_group_packs, .remove_obeyers = FALSE) %>%
+  get_report()
+```
+
+By default expose() guesses the pack type if common function is supplied. This behaviour has some edge cases but is useful for interactive use.
+
+```{r Expose can guess}
+mtcars %>%
+  expose(
+    some_data_pack = . %>% summarise(nrow = nrow(.) == 10)
+  ) %>%
+  get_report()
+```
+
+To write strict and robust code one can set `.guess` to `FALSE`.
+
+```{r Expose can not guess}
+mtcars %>%
+  expose(
+    some_data_pack = . %>% summarise(nrow = nrow(.) == 10),
+    .guess = FALSE
+  ) %>%
+  get_report()
+```
+
+### Acting after exposure
+
+General action should be done with `act_after_exposure()`. Is takes two arguments:
+
+- `.trigger` - a function which takes the data with attached exposure and returns `TRUE` if some action should be made.
+- `.actor` - a function which takes the same argument as `.trigger` and performes some action. __Note__ that this function is often created for creating side effects (printing, throwing error etc.) and should invisible return its input (to be able to use `act_after_exposure()` with pipe).
+
+```{r Acting after exposure}
+trigger_one_pack <- function(.tbl) {
+  packs_number <- .tbl %>%
+    get_packs_info() %>%
+    nrow()
+  
+  packs_number > 1
+}
+
+actor_one_pack <- function(.tbl) {
+  cat("More than one pack was applied.\n")
+  
+  invisible(.tbl)
+}
+
+mtcars %>%
+  expose(my_col_packs, my_row_packs) %>%
+  act_after_exposure(
+    .trigger = trigger_one_pack,
+    .actor = actor_one_pack
+  ) %>%
+  invisible()
+```
+
+There is a predefined function `assert_any_breaker()` which can notify about presence of any breaker in exposure.
+
+```{r Assert any breaker}
+mtcars %>%
+  expose(my_col_packs, my_row_packs) %>%
+  assert_any_breaker()
 ```
 
