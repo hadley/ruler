@@ -192,7 +192,7 @@ mtcars %>%
 #> 8 group_pack..1 any_cyl_6   1.1     0 FALSE
 ```
 
-By default expose() guesses the pack type if common function is supplied. This behaviour has some edge cases but is useful for interactive use.
+By default `expose()` guesses the pack type if common function is supplied. This behaviour has some edge cases but is useful for interactive use.
 
 ``` r
 mtcars %>%
@@ -236,7 +236,7 @@ trigger_one_pack <- function(.tbl) {
 }
 
 actor_one_pack <- function(.tbl) {
-  print("More than one pack was applied.")
+  cat("More than one pack was applied.\n")
   
   invisible(.tbl)
 }
@@ -248,15 +248,16 @@ mtcars %>%
     .actor = actor_one_pack
   ) %>%
   invisible()
-#> [1] "More than one pack was applied."
+#> More than one pack was applied.
 ```
 
-There is a predefined function `assert_any_breaker()` which can notify about presence of any breaker in exposure.
+`ruler` has function `assert_any_breaker()` which can notify about presence of any breaker in exposure.
 
 ``` r
 mtcars %>%
   expose(my_col_packs, my_row_packs) %>%
   assert_any_breaker()
+#>   Breakers report
 #> # A tibble: 3 x 5
 #>         pack               rule   var    id value
 #>        <chr>              <chr> <chr> <int> <lgl>

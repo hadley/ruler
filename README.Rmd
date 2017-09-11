@@ -180,7 +180,7 @@ mtcars %>%
   get_report()
 ```
 
-By default expose() guesses the pack type if common function is supplied. This behaviour has some edge cases but is useful for interactive use.
+By default `expose()` guesses the pack type if common function is supplied. This behaviour has some edge cases but is useful for interactive use.
 
 ```{r Expose can guess}
 mtcars %>%
@@ -232,7 +232,7 @@ mtcars %>%
   invisible()
 ```
 
-There is a predefined function `assert_any_breaker()` which can notify about presence of any breaker in exposure.
+`ruler` has function `assert_any_breaker()` which can notify about presence of any breaker in exposure.
 
 ```{r Assert any breaker}
 mtcars %>%
