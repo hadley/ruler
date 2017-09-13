@@ -16,10 +16,12 @@ column, row, cell) to logical value indicating whether this object satisfies
 certain condition.
 
 __Rule pack__ is a function which combines several rules into one functional
-block.
-
-The recommended way of creating rules is by creating packs right away with the use of `dplyr` and [magrittr](http://magrittr.tidyverse.org/)'s
+block. The recommended way of creating rules is by creating packs right away with the use of `dplyr` and [magrittr](http://magrittr.tidyverse.org/)'s
 pipe operator.
+
+Some of `ruler`'s functionality is powered by the [keyholder](http://github.com/echasnovski/keyholder) package. It is highly recommended to use its supported functions during rule construction. All one- and two-table `dplyr` verbs applied to local data frames are supported and considered the most appropriate way to create rule packs.
+
+__Exposing__ data to rules means applying rules to data, collecting results in common format and attaching them to the data as an `exposure` attribute (see vignette about formats). In this way actual exposure can be done in multiple steps and also be a part of a general data preparation pipeline.
 
 ## Data rule packs
 
