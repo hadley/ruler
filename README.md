@@ -40,7 +40,7 @@ Overview
 2.  **Tidy data validation report**: a `tibble` with the following structure:
     -   *pack* &lt;chr&gt; : Name of rule pack from column 'name' in packs info.
     -   *rule* &lt;chr&gt; : Name of the rule defined in rule pack.
-    -   *var* &lt;chr&gt; : Name of the variable which validation result is reported. Value '.all' is reserved and interpreted as 'all columns as a whole'. **Note** that *var* doesn't always represent the actual column in data frame: for group packs it represent the created group name.
+    -   *var* &lt;chr&gt; : Name of the variable which validation result is reported. Value '.all' is reserved and interpreted as 'all columns as a whole'. **Note** that *var* doesn't always represent the actual column in data frame: for group packs it represents the created group name.
     -   *id* &lt;int&gt; : Index of the row in tested data frame which validation result is reported. Value 0 is reserved and interpreted as 'all rows as a whole'.
     -   *value* &lt;lgl&gt; : Whether the described data unit obeys the rule.
 
@@ -91,7 +91,7 @@ my_group_packs <- group_packs(
     # Group should have at least one row with 'cyl' == 6
     summarise(any_cyl_6 = any(cyl == 6)),
   
-  # One should supply grouping variables
+  # One should supply grouping variables for correct interpretation of output
   .group_vars = c("vs", "am")
 )
 ```
@@ -99,25 +99,31 @@ my_group_packs <- group_packs(
 #### Column packs
 
 ``` r
-# List of one rule pack for checking certain columns' property
+# rules() is a dplyr::funs() with necessary name imputations
+# In column packs it should always be used instead of dplyr::funs()
+
+# List of two rule pack for checking certain columns' properties
 my_col_packs <- col_packs(
   sum_bounds = . %>% summarise_at(
     # Check only columns with names starting with 'c'
     vars(starts_with("c")),
-    # rules() is a dplyr::funs() with necessary name imputations
-    # In column packs it should always be used instead of dplyr::funs()
     # Columns should have sum in between 300 and 400
     rules(sum_low = sum(.) > 300, sum_high = sum(.) < 400)
-  )
+  ),
+  
+  # In the edge case of checking one column with one rule there is a need
+  # for forcing inclusion of names in the output of summarise_at().
+  # This is done with naming argument in vars()
+  vs_mean = . %>% summarise_at(vars(vs = vs), rules(mean(.) > 0.5))
 )
 ```
 
 #### Row packs
 
 ``` r
-# List of one rule pack checking certain rows' property
 z_score <- function(x) {(x - mean(x)) / sd(x)}
 
+# List of one rule pack checking certain rows' property
 my_row_packs <- row_packs(
   row_mean = . %>% mutate(rowMean = rowMeans(.)) %>%
     # Row's mean should deviate from mean of row means by not more than 1 sd
@@ -132,9 +138,9 @@ my_row_packs <- row_packs(
 #### Cell packs
 
 ``` r
-# List of one cell pack checking certain cells property
 is_integerish <- function(x) {all(x == as.integer(x))}
 
+# List of two cell pack checking certain cells' property
 my_cell_packs <- cell_packs(
   my_cell_pack_1 = . %>% transmute_if(
     # Check only integer-like columns
@@ -143,7 +149,10 @@ my_cell_packs <- cell_packs(
     rules(is_common = abs(z_score(.)) < 1)
   ) %>%
     # Check only rows 20-30
-    slice(20:30)
+    slice(20:30),
+  
+  # The same edge case as in column rule pack
+  vs_side = . %>% transmute_at(vars(vs = "vs"), rules(. > mean(.)))
 )
 ```
 
@@ -210,7 +219,7 @@ By default `expose()` guesses the pack type if 'not-pack' function is supplied. 
 mtcars %>%
   expose(
     some_data_pack = . %>% summarise(nrow = nrow(.) == 10),
-    some_col_pack = . %>% summarise_at("vs", rules(is.character(.)))
+    some_col_pack = . %>% summarise_at(vars(vs = "vs"), rules(is.character(.)))
   ) %>%
   get_exposure()
 #>   Exposure
@@ -227,7 +236,7 @@ mtcars %>%
 #>             pack    rule   var    id value
 #>            <chr>   <chr> <chr> <int> <lgl>
 #> 1 some_data_pack    nrow  .all     0 FALSE
-#> 2  some_col_pack rule..1           0 FALSE
+#> 2  some_col_pack rule..1    vs     0 FALSE
 ```
 
 To write strict and robust code one can set `.guess` to `FALSE`.
@@ -236,7 +245,7 @@ To write strict and robust code one can set `.guess` to `FALSE`.
 mtcars %>%
   expose(
     some_data_pack = . %>% summarise(nrow = nrow(.) == 10),
-    some_col_pack = . %>% summarise_at("vs", rules(is.character(.))),
+    some_col_pack = . %>% summarise_at(vars(vs = "vs"), rules(is.character(.))),
     .guess = FALSE
   ) %>%
   get_exposure()
@@ -245,10 +254,12 @@ mtcars %>%
 
 ### Acting after exposure
 
-General action should be done with `act_after_exposure()`. Is takes two arguments:
+General actions is recommended to be done with `act_after_exposure()`. It takes two arguments:
 
 -   `.trigger` - a function which takes the data with attached exposure and returns `TRUE` if some action should be made.
--   `.actor` - a function which takes the same argument as `.trigger` and performes some action. **Note** that this function is often created for creating side effects (printing, throwing error etc.) and should invisible return its input (to be able to use `act_after_exposure()` with pipe).
+-   `.actor` - a function which takes the same argument as `.trigger` and performes some action.
+
+If trigger didn't notify then the input data is returned untouched. Otherwise the output of `.actor()` is returned. **Note** that `act_after_exposure()` is often used for creating side effects (printing, throwing error etc.) and in that case should invisibly return its input (to be able to use it with pipe).
 
 ``` r
 trigger_one_pack <- function(.tbl) {
@@ -282,11 +293,12 @@ mtcars %>%
   expose(my_col_packs, my_row_packs) %>%
   assert_any_breaker()
 #>   Breakers report
-#> # A tibble: 3 x 5
+#> # A tibble: 4 x 5
 #>         pack               rule   var    id value
 #>        <chr>              <chr> <chr> <int> <lgl>
 #> 1 sum_bounds            sum_low   cyl     0 FALSE
 #> 2 sum_bounds            sum_low  carb     0 FALSE
-#> 3   row_mean is_common_row_mean  .all    15 FALSE
+#> 3    vs_mean            rule..1    vs     0 FALSE
+#> 4   row_mean is_common_row_mean  .all    15 FALSE
 #> Error: assert_any_breaker: Some breakers found in exposure.
 ```
