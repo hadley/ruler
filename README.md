@@ -6,7 +6,9 @@ ruler: Rule Your Data
 
 `ruler` offers a set of tools for creating tidy data validation reports using [dplyr](http://dplyr.tidyverse.org) grammar of data manipulation. It is designed to be flexible and extendable in terms of creating rules and using their output.
 
-It is recommended to have the solid knowledge of `dplyr` to fully use this package.
+To fully use this package a solid knowledge of `dplyr` is required.
+
+Some functionality is powered by the [keyholder](http://github.com/echasnovski/keyholder) package. It is highly recommended to use its supported functions during rule construction. All one- and two-table `dplyr` verbs applied to local data frames are supported and considered the most appropriate way to create rules.
 
 Installation
 ------------
@@ -25,12 +27,12 @@ Overview
 
 **Rule pack** is a function which combines several rules into one functional block. The recommended way of creating rules is by creating packs right away with the use of `dplyr` and [magrittr](http://magrittr.tidyverse.org/)'s pipe operator.
 
-**Exposing** data to rules means applying rules to data, collecting results in common format and attaching it to the data as an `exposure` attribute. In this way actual exposure can be done in multiple steps and also be a part of a general data preparation pipeline.
+**Exposing** data to rules means applying rules to data, collecting results in common format and attaching them to the data as an `exposure` attribute. In this way actual exposure can be done in multiple steps and also be a part of a general data preparation pipeline.
 
-**Exposure** is a format designed to contain uniform information about validation of different data units. It also saves information about packs application for reproducibilty. Basically exposure is a list with two elements:
+**Exposure** is a format designed to contain uniform information about validation of different data units. For reproducibilty it also saves information about applied packs. Basically exposure is a list with two elements:
 
 1.  **Packs info**: a [tibble](http://tibble.tidyverse.org/) with the following structure:
-    -   *name* &lt;chr&gt; : Name of the pack. If not given it will be imputed during exposure.
+    -   *name* &lt;chr&gt; : Name of the pack. If not set manually it will be imputed during exposure.
     -   *type* &lt;chr&gt; : Name of pack type. Indicates which data unit pack checks.
     -   *fun* &lt;list&gt; : List (preferably unnamed) of rule pack functions.
     -   *remove\_obeyers* &lt;lgl&gt; : Whether rows about obeyers (data units that obey certain rule) were removed from report after applying pack.
@@ -177,7 +179,17 @@ One can leave obeyers by setting `.remove_obeyers` to `FALSE`.
 ``` r
 mtcars %>%
   expose(my_data_packs, my_group_packs, .remove_obeyers = FALSE) %>%
-  get_report()
+  get_exposure()
+#>   Exposure
+#> 
+#> Packs info:
+#> # A tibble: 3 x 4
+#>            name       type              fun remove_obeyers
+#>           <chr>      <chr>           <list>          <lgl>
+#> 1     data_dims  data_pack  <S3: data_pack>          FALSE
+#> 2          vs_1  data_pack  <S3: data_pack>          FALSE
+#> 3 group_pack..1 group_pack <S3: group_pack>          FALSE
+#> 
 #> Tidy data validation report:
 #> # A tibble: 8 x 5
 #>            pack      rule   var    id value
@@ -192,19 +204,30 @@ mtcars %>%
 #> 8 group_pack..1 any_cyl_6   1.1     0 FALSE
 ```
 
-By default `expose()` guesses the pack type if common function is supplied. This behaviour has some edge cases but is useful for interactive use.
+By default `expose()` guesses the pack type if 'not-pack' function is supplied. This behaviour has some edge cases but is useful for interactive use.
 
 ``` r
 mtcars %>%
   expose(
-    some_data_pack = . %>% summarise(nrow = nrow(.) == 10)
+    some_data_pack = . %>% summarise(nrow = nrow(.) == 10),
+    some_col_pack = . %>% summarise_at("vs", rules(is.character(.)))
   ) %>%
-  get_report()
+  get_exposure()
+#>   Exposure
+#> 
+#> Packs info:
+#> # A tibble: 2 x 4
+#>             name      type             fun remove_obeyers
+#>            <chr>     <chr>          <list>          <lgl>
+#> 1 some_data_pack data_pack <S3: data_pack>           TRUE
+#> 2  some_col_pack  col_pack  <S3: col_pack>           TRUE
+#> 
 #> Tidy data validation report:
-#> # A tibble: 1 x 5
-#>             pack  rule   var    id value
-#>            <chr> <chr> <chr> <int> <lgl>
-#> 1 some_data_pack  nrow  .all     0 FALSE
+#> # A tibble: 2 x 5
+#>             pack    rule   var    id value
+#>            <chr>   <chr> <chr> <int> <lgl>
+#> 1 some_data_pack    nrow  .all     0 FALSE
+#> 2  some_col_pack rule..1           0 FALSE
 ```
 
 To write strict and robust code one can set `.guess` to `FALSE`.
@@ -213,9 +236,10 @@ To write strict and robust code one can set `.guess` to `FALSE`.
 mtcars %>%
   expose(
     some_data_pack = . %>% summarise(nrow = nrow(.) == 10),
+    some_col_pack = . %>% summarise_at("vs", rules(is.character(.))),
     .guess = FALSE
   ) %>%
-  get_report()
+  get_exposure()
 #> Error in expose_single.default(X[[i]], ...): There is unsupported class of rule pack.
 ```
 
