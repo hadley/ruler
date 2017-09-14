@@ -69,7 +69,13 @@ After attaching exposure to data frame one can extract information from it using
 - `get_packs_info()` for packs info (part of exposure).
 - `get_report()` for tidy data validation report (part of exposure).
 
-For exposing data to rules use `expose()`. It takes data as a first argument and then rule packs (in pure form or inside list at any depth) to be applied to it. Simple example:
+For exposing data to rules use `expose()`:
+
+- It takes data as a first argument and then rule packs (in pure form or inside list at any depth) of interest.
+- All rule packs are actually applied to __keyed__ version of data (see [keyholder](http://github.com/echasnovski/keyholder)) for reasons stated in "Rule Packs" vignette. If input has keys they are removed and _id key_ is created.
+- It is guaranteed that its output is equivalent to the input data frame: only attribute `exposure` might change. If input has `exposure` attached to it then the new one is binded with it.
+
+Simple example:
 
 ```{r Simple expose}
 mtcars %>%
