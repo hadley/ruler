@@ -12,11 +12,11 @@ vignette: >
 The main idea of the `ruler` package is to create a format of validation results (along with functional API) that will work naturally with [tidyverse](http://tidyverse.org) tools. This vignette will:
 
 - Guide you through the design process of __exposure__: `ruler`'s validation result format. This should help to understand the foundations of `ruler` validation workflow.
-- Describe the format of __exposure__.
+- Describe exposure format.
 
 ## Design process
 
-The preferred local data structure in `tidyverse` is [tibble](http://tibble.tidyverse.org): "A modern re-imagining of the data frame", on which its implementation is based. That is why `ruler` takes data frames as preferred format for validated data. However the initial goal is to use tibbles in creation of validation result format as much as possible.
+The preferred local data structure in `tidyverse` is [tibble](http://tibble.tidyverse.org): "A modern re-imagining of the data frame", on which its implementation is based. That is why `ruler` uses data frames as preferred format for data to be validated. However the initial goal is to use tibbles in creation of validation result format as much as possible.
 
 Basically data frame is a list of variables with the same length. It is easier to think about it as two-dimensional structure where columns can be of different types.
 
@@ -37,17 +37,17 @@ In `ruler` data, group, column, row and cell are five basic data units. They all
     - Value _equal_ to some column name indicates column of data unit.
     - Value _not equal_ to some column name indicates the name of group: it is created by uniting (with delimiter) group levels of grouping columns.
 - __id__ which represents the row index of data unit:
-    - Value `0` is reserved for 'all rows as a whole'.
+    - Value 0 is reserved for 'all rows as a whole'.
     - Value not equal to 0 indicates the row index of data unit.
 
-The validation of data units can be done with the functions described above. Their application to some data unit can give answers to multiple questions (differing only in their interpretation). That is why by design __rules__ (functions that answer one certain question) are combined in __rule packs__ (functions that answer multiple questions for one data unit).
+Validation of data units can be done with the `dplyr` functions described above. Their application to some data unit can give answers to multiple questions. That is why by design __rules__ (functions that answer one certain question about one type of data unit) are combined in __rule packs__ (functions that answer multiple questions about one type of data unit).
 
 Application of rule pack to data is connected with several points:
 
-- Rule packs should have unique __names__ to be used as reference to it.
-- By the same reason rules should have names. However uniqueness is necessary only within corresponding rule pack.
-- Output of rule packs for different data units differ in their structure. Therefore rule packs should have __types__.
-- During the actual validation the most part of results normally indicates obedience to rules. This can cause dragging many redundant information. `ruler` has option of __removing obeyers__ from validation result.
+- Rule packs should have unique __names__ to be used as references.
+- By the same reason rules should have names. However uniqueness is necessary only within corresponding rule pack which makes pair 'pack name'+'rule name' a key of identifying the actual rule.
+- Output of rule packs for different data units differ in their structure. Therefore rule packs should have __types__ to apply different interpretations to their outputs.
+- During the actual validation the most part of results normally indicates obedience to rules. This can cause storing many redundant information in validation results. `ruler` has option of __removing obeyers__ from results during the validation.
 
 In `ruler` __exposing__ data to rules means applying rule packs to data, collecting results in common format and attaching them to the data as an `exposure` attribute. In this way actual exposure can be done in multiple steps and also be a part of a general data preparation pipeline.
 
