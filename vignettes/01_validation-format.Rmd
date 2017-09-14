@@ -53,7 +53,7 @@ In `ruler` __exposing__ data to rules means applying rule packs to data, collect
 
 ## Exposure
 
-__Exposure__ is a format designed to contain uniform information about validation of different data units. For reproducibilty it also saves information about applied packs. Basically exposure is a list with two elements:
+__Exposure__ is a format designed to contain uniform information about validation of different data units. For reproducibility it also saves information about applied packs. Basically exposure is a list with two elements:
 
 1. __Packs info__: a `tibble` with the following structure:
     - _name_ \<chr\> : Name of the pack. If not set manually it will be imputed during exposure.
