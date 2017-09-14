@@ -6,10 +6,9 @@ output: github_document
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "README-",
-  error = TRUE
+  fig.path = "README-"
 )
-library(ruler)
+library(ruler, quietly = TRUE, warn.conflicts = FALSE)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 ```
 
@@ -203,7 +202,7 @@ mtcars %>%
 
 To write strict and robust code one can set `.guess` to `FALSE`.
 
-```{r Expose can not guess}
+```{r Expose can not guess, error = TRUE, purl = FALSE}
 mtcars %>%
   expose(
     some_data_pack = . %>% summarise(nrow = nrow(.) == 10),
@@ -248,7 +247,7 @@ mtcars %>%
 
 `ruler` has function `assert_any_breaker()` which can notify about presence of any breaker in exposure.
 
-```{r Assert any breaker}
+```{r Assert any breaker, error = TRUE, purl = FALSE}
 mtcars %>%
   expose(my_col_packs, my_row_packs) %>%
   assert_any_breaker()

@@ -254,7 +254,7 @@ mtcars %>%
 
 ### Acting after exposure
 
-General actions is recommended to be done with `act_after_exposure()`. It takes two arguments:
+General actions are recommended to be done with `act_after_exposure()`. It takes two arguments:
 
 -   `.trigger` - a function which takes the data with attached exposure and returns `TRUE` if some action should be made.
 -   `.actor` - a function which takes the same argument as `.trigger` and performes some action.
