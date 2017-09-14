@@ -130,6 +130,35 @@ mtcars %>%
          .guess = FALSE)
 ```
 
+### Using different rule separator
+
+If for some reason not default rule separator was used in `rules()` one should take this into consideration by using argument `.rule_sep`. It takes regular expression describing the separator. __Note__ that by default it is a string '._.' surrounded by any number of 'non alpha-numeric characters' (with use of `inside_punct()`). This is done to take account of the `dplyr`'s default separator `_`.
+
+```{r Expose can change rule separator}
+regular_col_packs <- col_packs(
+  . %>% summarise_all(rules(mean(.) > 1))
+)
+
+irregular_col_packs <- col_packs(
+  . %>% summarise_all(rules(mean(.) > 1, .prefix = "@_@"))
+)
+
+regular_report <- mtcars %>%
+  expose(regular_col_packs) %>%
+  get_report()
+
+irregular_report <- mtcars %>%
+  expose(irregular_col_packs, .rule_sep = inside_punct("@_@")) %>%
+  get_report()
+
+identical(regular_report, irregular_report)
+
+# Note suffix '_' after column names
+mtcars %>%
+  expose(irregular_col_packs, .rule_sep = "@_@") %>%
+  get_report()
+```
+
 ## Acting after exposure
 
 ### General actions
