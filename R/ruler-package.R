@@ -17,7 +17,11 @@
 #'   outliers and so on.
 #'
 #' To learn more about `ruler` browse vignettes with `browseVignettes(package =
-#' "ruler")`.
+#' "ruler")`. The preferred order is:
+#'
+#' 1. Design process and exposure format.
+#' 2. Rule packs.
+#' 3. Validation
 #'
 #' @import keyholder
 #' @import dplyr

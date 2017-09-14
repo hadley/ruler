@@ -1,10 +1,10 @@
 ---
-title: "Expose data to rules"
+title: "Validation"
 author: "Evgeni Chasnovski"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Expose data to rules}
+  %\VignetteIndexEntry{Validation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -55,7 +55,7 @@ my_cell_packs <- cell_packs(
 )
 ```
 
-This vignette will describe the actual validation step of `ruler` workflow and show some examples of what one can do with validation results Packs from vignette about rule packs will be used for this.
+This vignette will describe the actual validation step (called 'exposure') of `ruler` workflow and show some examples of what one can do with validation results. Packs from vignette about rule packs will be used for this.
 
 ## Exposure
 

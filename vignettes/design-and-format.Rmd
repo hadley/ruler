@@ -1,10 +1,10 @@
 ---
-title: "Validation format"
+title: "Design process and exposure format"
 author: "Evgeni Chasnovski"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Validation format}
+  %\VignetteIndexEntry{Design process and exposure format}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

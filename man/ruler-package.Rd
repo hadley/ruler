@@ -25,7 +25,12 @@ report}.
 outliers and so on.
 }
 
-To learn more about \code{ruler} browse vignettes with \code{browseVignettes(package = "ruler")}.
+To learn more about \code{ruler} browse vignettes with \code{browseVignettes(package = "ruler")}. The preferred order is:
+\enumerate{
+\item Design process and exposure format.
+\item Rule packs.
+\item Validation
+}
 }
 \seealso{
 Useful links:
