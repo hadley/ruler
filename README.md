@@ -4,9 +4,9 @@ ruler: Rule Your Data
 
 [![Travis-CI Build Status](https://travis-ci.org/echasnovski/ruler.svg?branch=master)](https://travis-ci.org/echasnovski/ruler) [![Coverage Status](https://codecov.io/gh/echasnovski/ruler/graph/badge.svg)](https://codecov.io/github/echasnovski/ruler?branch=master)
 
-`ruler` offers a set of tools for creating tidy data validation reports using [dplyr](http://dplyr.tidyverse.org) grammar of data manipulation. It is designed to be flexible and extendable in terms of creating rules and using their output.
+`ruler` offers a set of tools for creating tidy data validation reports using [dplyr](http://dplyr.tidyverse.org) grammar of data manipulation. It is structured to be flexible and extendable in terms of creating rules and using their output.
 
-To fully use this package a solid knowledge of `dplyr` is required.
+To fully use this package a solid knowledge of `dplyr` is required. The key idea behind `ruler`'s design is to validate data by modifying regular `dplyr` code with as little overhead as possible.
 
 Some functionality is powered by the [keyholder](http://github.com/echasnovski/keyholder) package. It is highly recommended to use its supported functions during rule construction. All one- and two-table `dplyr` verbs applied to local data frames are supported and considered the most appropriate way to create rules.
 
@@ -34,7 +34,7 @@ Overview
 1.  **Packs info**: a [tibble](http://tibble.tidyverse.org/) with the following structure:
     -   *name* &lt;chr&gt; : Name of the pack. If not set manually it will be imputed during exposure.
     -   *type* &lt;chr&gt; : Name of pack type. Indicates which data unit pack checks.
-    -   *fun* &lt;list&gt; : List (preferably unnamed) of rule pack functions.
+    -   *fun* &lt;list&gt; : List of rule pack functions.
     -   *remove\_obeyers* &lt;lgl&gt; : Whether rows about obeyers (data units that obey certain rule) were removed from report after applying pack.
 
 2.  **Tidy data validation report**: a `tibble` with the following structure:
@@ -64,7 +64,6 @@ Usage
 # List of two rule packs for checking data properties
 my_data_packs <- data_packs(
   # data_dims is a pack name
-  # Data should have 12 columns and 32 rows
   data_dims = . %>% summarise(
     # ncol and nrow are rule names
     ncol = ncol(.) == 12,
@@ -88,7 +87,6 @@ my_data_packs <- data_packs(
 my_group_packs <- group_packs(
   # Name will be imputed during exposure
   . %>% group_by(vs, am) %>%
-    # Group should have at least one row with 'cyl' == 6
     summarise(any_cyl_6 = any(cyl == 6)),
   
   # One should supply grouping variables for correct interpretation of output
@@ -107,7 +105,6 @@ my_col_packs <- col_packs(
   sum_bounds = . %>% summarise_at(
     # Check only columns with names starting with 'c'
     vars(starts_with("c")),
-    # Columns should have sum in between 300 and 400
     rules(sum_low = sum(.) > 300, sum_high = sum(.) < 400)
   ),
   
@@ -126,7 +123,6 @@ z_score <- function(x) {(x - mean(x)) / sd(x)}
 # List of one rule pack checking certain rows' property
 my_row_packs <- row_packs(
   row_mean = . %>% mutate(rowMean = rowMeans(.)) %>%
-    # Row's mean should deviate from mean of row means by not more than 1 sd
     transmute(is_common_row_mean = abs(z_score(rowMean)) < 1) %>%
     # Check only rows 10-15
     # Values in 'id' column of report will be based on input data (i.e. 10-15)
@@ -145,7 +141,6 @@ my_cell_packs <- cell_packs(
   my_cell_pack_1 = . %>% transmute_if(
     # Check only integer-like columns
     is_integerish,
-    # Value should deviate from its column mean by not more than 1 sd
     rules(is_common = abs(z_score(.)) < 1)
   ) %>%
     # Check only rows 20-30
