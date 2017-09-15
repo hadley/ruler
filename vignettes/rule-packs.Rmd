@@ -24,9 +24,9 @@ __Rule pack__ is a function which combines several rules for common data unit in
 
 Some of `ruler`'s functionality is powered by the [keyholder](http://github.com/echasnovski/keyholder) package. It is highly recommended to use its supported functions during rule pack construction. All one- and two-table `dplyr` verbs applied to local data frames are supported and considered the most appropriate way to create rule packs.
 
-As described in vignette about validation format it is necessary for rule pack to have __type__ because outputs for different data units have different structure. For this reason `ruler` has family of `*_packs()` constructors (where `*` stands for the name of data unit):
+As described in vignette about design process it is necessary for rule pack to have __type__ because outputs for different data units have different structure. For this reason `ruler` has family of `*_packs()` constructors (where `*` stands for the name of data unit):
 
-- They take functions (in pure form or inside unnamed list at any depth) defining packs as arguments. It is recommended to name those arguments with future pack names. If no name supplied it will be imputed during exposure.
+- They take functions defining packs (in pure form or inside list at any depth) as arguments. It is recommended to name those arguments with future pack names. If no name is supplied then it will be imputed during exposure.
 - They return list of what should be rule packs of certain type.
 
 ## Data rule packs
@@ -48,9 +48,9 @@ The output has the following structure:
 - Column names define __rule names__.
 - Values indicate whether the __data as a whole__ follows the rule.
 
-There is an easy way to transform this pipeline into a function to be used for any data: `mtcars` should be replaced with `.`. To indicate that this function is a rule pack for data unit 'data' it should be wrapped with `data_packs()`.
+There is an easy way to transform this pipeline into a function to be used for any data: `mtcars` should be replaced with `.` character. To indicate that this function is a rule pack for data unit 'data' it should be wrapped with `data_packs()`.
 
-The next code creates a list `my_data_packs` with one data rule pack with name `my_data_pack_1`. That rule pack defines rules with names `nrow_low`, `nrow_high`, `ncol`.
+The next code creates a list `my_data_packs` with one data rule pack named `my_data_pack_1`. That rule pack defines rules with names `nrow_low`, `nrow_high`, `ncol`.
 
 ```{r Data rule packs}
 my_data_packs <- data_packs(
@@ -115,7 +115,7 @@ The output has the following structure:
 In general it is hard to automatically separate output's column names into 'validated column name' and 'rule name' because default separator `_` is a commonly used one. For this reason `ruler` has function `rules()` which wraps `funs()` with the following functionality:
 
 - Impute not supplied rule names. The format is 'rule..{ind}' where {ind} is the index of function position within `rules()`'s arguments.
-- Add rare prefix `._.` (Morse code for 'R') to rule names. __Note__ that one can change this prefix with `.prefix` argument.
+- Add rarely used prefix `._.` (Morse code for 'R') to rule names. __Note__ that one can change this prefix with `.prefix` argument.
 
 The next code creates a list with two elements:
 
@@ -151,7 +151,7 @@ The output has the following structure:
 - Column names define __rule names__.
 - Values indicate whether the __row as a whole__ follows the rule.
 
-Pipeline like the one above is quite common: for every row compute some value based on all rows and then validate only some of them. However in the validation report column `id` should represent the row index _in the original data frame_ and this information is missing after applying of `slice()`.
+Pipeline like the one above is quite common: for every row compute some value based on all rows and then validate only some of them. However in the validation report column `id` should represent the row index _in the original data frame_ and this information is missing after applying `slice()`.
 
 This problem is solved by using [keyholder](https://github.com/echasnovski/keyholder) package. Its main purpose is to track information about rows while modifying data frame. During exposure pack is applied to the __keyed__ version of input data with key equals to row index. __Note__ that to use this feature one should create rule packs using composition of functions supported by `keyholder`.
 
@@ -188,7 +188,7 @@ Basically cell rule pack is a combination of column and row rule packs. It means
 - Using `rules()` instead of `funs()` in scoped variants of `transmute()`.
 - Using functions supported by `keyholder`.
 
-The next code creates a list with one cell pack `my_cell_pack_1`. It checks cell of every integer-like column in rows 20-24. The rule `is_common` checks the values for not being an outlier within column.
+The next code creates a list with one cell pack `my_cell_pack_1`. It checks cells of every integer-like column in rows 20-24 for not being an outlier within column.
 
 ```{r Cell rule packs}
 my_cell_packs <- cell_packs(

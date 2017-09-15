@@ -71,9 +71,9 @@ After attaching exposure to data frame one can extract information from it using
 
 For exposing data to rules use `expose()`:
 
-- It takes data as a first argument and then rule packs (in pure form or inside list at any depth) of interest.
-- All rule packs are actually applied to __keyed__ version of data (see [keyholder](http://github.com/echasnovski/keyholder)) for reasons stated in "Rule Packs" vignette. If input has keys they are removed and _id key_ is created.
-- It is guaranteed that its output is equivalent to the input data frame: only attribute `exposure` might change. If input has `exposure` attached to it then the new one is binded with it.
+- It takes data as a first argument and rule packs (in pure form or inside list at any depth) of interest after that.
+- All rule packs are actually applied to __keyed__ version of data (see [keyholder](http://github.com/echasnovski/keyholder)) for reasons described in "Rule Packs" vignette. If input has keys they are removed and _id key_ is created.
+- It is guaranteed that its output is equivalent to the input data frame: only attribute `exposure` might change. If input has already `exposure` attached to it then the new one is binded with it.
 
 Simple example:
 
@@ -120,7 +120,7 @@ identical(mtcars_one_step, mtcars_two_step)
 
 ### Guessing
 
-By default (if not set manually) `expose()` guesses which type of pack function represents. This is useful for interactive experiments. Guess is based on features of pack's output structures (see `?expose` for more details).
+By default `expose()` guesses which type of pack function represents (if it is not set manually). This is useful for interactive experiments. Guess is based on features of pack's output structures (see `?expose` for more details).
 
 ```{r Expose can guess}
 mtcars %>%
@@ -176,7 +176,7 @@ General actions are recommended to be done with `act_after_exposure()`. It takes
 - `.trigger` - a function which takes the data with attached exposure and returns `TRUE` if some action should be made.
 - `.actor` - a function which takes the same argument as `.trigger` and performes some action.
 
-If trigger didn't notify then the input data is returned untouched. Otherwise the output of `.actor()` is returned. __Note__ that `act_after_exposure()` is often used for creating side effects (printing, throwing error etc.) and in that case should invisibly return its input (to be able to use it with pipe).
+If trigger didn't notify then the input data is returned untouched. Otherwise the output of `.actor()` is returned. __Note__ that `act_after_exposure()` is often used for creating side effects (printing, throwing error etc.) and in that case should invisibly return its input (to be able to use it with pipe `%>%`).
 
 ```{r Acting after exposure}
 trigger_one_pack <- function(.tbl) {
