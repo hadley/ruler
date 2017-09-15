@@ -297,3 +297,19 @@ mtcars %>%
 #> 4   row_mean is_common_row_mean  .all    15 FALSE
 #> Error: assert_any_breaker: Some breakers found in exposure.
 ```
+
+### Other packages for validation and assertions
+
+More leaned towards assertions:
+
+-   [assertr](https://github.com/ropensci/assertr)
+-   [assertthat](https://github.com/hadley/assertthat)
+-   [checkmate](https://github.com/mllg/checkmate)
+-   [ensurer](https://github.com/smbache/ensurer)
+-   [tester](https://github.com/gastonstat/tester)
+
+More leaned towards validation:
+
+-   [naniar](https://github.com/njtierney/naniar)
+-   [skimr](https://github.com/ropenscilabs/skimr)
+-   [validate](https://github.com/data-cleaning/validate)
