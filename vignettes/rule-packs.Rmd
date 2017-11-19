@@ -22,7 +22,7 @@ __Rule__ is a function which converts data unit of interest (data, group, column
 
 __Rule pack__ is a function which combines several rules for common data unit into one functional block. The recommended way of creating rules is by creating packs right away with the use of `dplyr` and [magrittr](http://magrittr.tidyverse.org/)'s pipe operator.
 
-Some of `ruler`'s functionality is powered by the [keyholder](http://github.com/echasnovski/keyholder) package. It is highly recommended to use its supported functions during rule pack construction. All one- and two-table `dplyr` verbs applied to local data frames are supported and considered the most appropriate way to create rule packs.
+Some of `ruler`'s functionality is powered by the [keyholder](https://echasnovski.github.io/keyholder) package. It is highly recommended to use its supported functions during rule pack construction. All one- and two-table `dplyr` verbs applied to local data frames are supported and considered the most appropriate way to create rule packs.
 
 As described in vignette about design process it is necessary for rule pack to have __type__ because outputs for different data units have different structure. For this reason `ruler` has family of `*_packs()` constructors (where `*` stands for the name of data unit):
 
@@ -153,7 +153,7 @@ The output has the following structure:
 
 Pipeline like the one above is quite common: for every row compute some value based on all rows and then validate only some of them. However in the validation report column `id` should represent the row index _in the original data frame_ and this information is missing after applying `slice()`.
 
-This problem is solved by using [keyholder](https://github.com/echasnovski/keyholder) package. Its main purpose is to track information about rows while modifying data frame. During exposure pack is applied to the __keyed__ version of input data with key equals to row index. __Note__ that to use this feature one should create rule packs using composition of functions supported by `keyholder`.
+This problem is solved by using [keyholder](https://echasnovski.github.io/keyholder) package. Its main purpose is to track information about rows while modifying data frame. During exposure pack is applied to the __keyed__ version of input data with key equals to row index. __Note__ that to use this feature one should create rule packs using composition of functions supported by `keyholder`.
 
 The next code creates a list with one row pack `my_row_pack_1`. It contains one rule `is_common_row_mean` that checks 6 rows (from 10 to 15) for not being an outlier (based on information from all rows) in terms of row means.
 

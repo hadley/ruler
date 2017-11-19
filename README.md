@@ -8,7 +8,7 @@ ruler: Rule Your Data
 
 To fully use this package a solid knowledge of `dplyr` is required. The key idea behind `ruler`'s design is to validate data by modifying regular `dplyr` code with as little overhead as possible.
 
-Some functionality is powered by the [keyholder](http://github.com/echasnovski/keyholder) package. It is highly recommended to use its supported functions during rule construction. All one- and two-table `dplyr` verbs applied to local data frames are supported and considered the most appropriate way to create rules.
+Some functionality is powered by the [keyholder](https://echasnovski.github.io/keyholder) package. It is highly recommended to use its supported functions during rule construction. All one- and two-table `dplyr` verbs applied to local data frames are supported and considered the most appropriate way to create rules.
 
 Installation
 ------------
@@ -36,7 +36,6 @@ Overview
     -   *type* &lt;chr&gt; : Name of pack type. Indicates which data unit pack checks.
     -   *fun* &lt;list&gt; : List of rule pack functions.
     -   *remove\_obeyers* &lt;lgl&gt; : Whether rows about obeyers (data units that obey certain rule) were removed from report after applying pack.
-
 2.  **Tidy data validation report**: a `tibble` with the following structure:
     -   *pack* &lt;chr&gt; : Name of rule pack from column 'name' in packs info.
     -   *rule* &lt;chr&gt; : Name of the rule defined in rule pack.
